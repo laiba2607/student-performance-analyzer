@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Student Performance Analyzer</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 450px;
+        }
+
+        h2 { margin-top: 0; color: var(--primary); font-size: 1.5rem; text-align: center; }
+        p.subtitle { text-align: center; color: var(--text-light); margin-bottom: 1.5rem; font-size: 0.9rem; }
+
+        .input-group { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem; }
+        input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        input:focus { outline: none; border-color: var(--primary); ring: 2px solid var(--primary); }
+
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 1rem;
+        }
+        button:hover { background-color: var(--primary-hover); }
+
+        #resultArea {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 2px dashed var(--border);
+            display: none;
+        }
+
+        .score-box { text-align: center; margin-bottom: 1.5rem; }
+        .score-val { font-size: 2.5rem; font-weight: 800; color: var(--primary); }
+        .level-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-top: 0.5rem;
+        }
+
+        .suggestions { font-size: 0.9rem; line-height: 1.6; }
+        .suggestions ul { padding-left: 1.2rem; }
+        .motivation {
+            font-style: italic;
+            color: var(--text-light);
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        /* Level Colors */
+        .low { background: #fee2e2; color: #991b1b; }
+        .average { background: #fef3c7; color: #92400e; }
+        .good { background: #dcfce7; color: #166534; }
+        .excellent { background: #e0e7ff; color: #3730a3; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Academic Performance AI</h2>
+    <p class="subtitle">Enter metrics to predict final performance.</p>
+
+    <div class="input-group">
+        <label>Study Hours (per day)</label>
+        <input type="number" id="studyHours" placeholder="e.g. 6" min="0" max="24">
+    </div>
+    <div class="input-group">
+        <label>Attendance (%)</label>
+        <input type="number" id="attendance" placeholder="e.g. 85" min="0" max="100">
+    </div>
+    <div class="input-group">
+        <label>Sleep Hours</label>
+        <input type="number" id="sleepHours" placeholder="e.g. 7" min="0" max="24">
+    </div>
+    <div class="input-group">
+        <label>Previous Score (%)</label>
+        <input type="number" id="prevScore" placeholder="e.g. 75" min="0" max="100">
+    </div>
+
+    <button onclick="analyzePerformance()">Analyze Student</button>
+
+    <div id="resultArea">
+        <div class="score-box">
+            <div id="performanceLevel" class="level-badge">LEVEL</div>
+            <div class="score-val" id="predictedScore">--</div>
+            <div style="font-size: 0.8rem; color: var(--text-light);">Estimated Final Score</div>
+        </div>
+
+        <div class="suggestions">
+            <strong>Key Improvements:</strong>
+            <ul id="suggestionsList"></ul>
+        </div>
+
+        <div class="motivation" id="motivationText"></div>
+    </div>
+</div>
+
+<script>
+    function analyzePerformance() {
+        // 1. Get Inputs
+        const studyHours = parseFloat(document.getElementById('studyHours').value) || 0;
+        const attendance = parseFloat(document.getElementById('attendance').value) || 0;
+        const sleepHours = parseFloat(document.getElementById('sleepHours').value) || 0;
+        const prevScore = parseFloat(document.getElementById('prevScore').value) || 0;
+
+        // 2. Calculation Logic
+        // Formula: final_score = (study_hours * 5) + (attendance * 0.3) + (previous_score * 0.4)
+        let score = (studyHours * 5) + (attendance * 0.3) + (prevScore * 0.4);
+        
+        // Cap score at 100
+        score = Math.min(Math.round(score), 100);
+
+        // 3. Determine Performance Level
+        let level = "";
+        let levelClass = "";
+        if (score < 50) { level = "Low"; levelClass = "low"; }
+        else if (score < 70) { level = "Average"; levelClass = "average"; }
+        else if (score < 85) { level = "Good"; levelClass = "good"; }
+        else { level = "Excellent"; levelClass = "excellent"; }
+
+        // 4. Generate Suggestions
+        const suggestions = [];
+        if (studyHours < 4) suggestions.push("Increase daily study blocks to at least 4-5 hours for better retention.");
+        if (attendance < 85) suggestions.push("Boost attendance to capture instructor hints and exam-specific focus areas.");
+        if (sleepHours < 7) suggestions.push("Prioritize 7+ hours of sleep to improve cognitive recall and mental stamina.");
+        if (suggestions.length < 3) suggestions.push("Incorporate Active Recall and Spaced Repetition techniques into your routine.");
+        if (suggestions.length < 3) suggestions.push("Analyze previous exam errors to distinguish between conceptual gaps and careless mistakes.");
+
+        // 5. Update UI
+        document.getElementById('resultArea').style.display = 'block';
+        document.getElementById('predictedScore').innerText = score + "%";
+        
+        const levelBadge = document.getElementById('performanceLevel');
+        levelBadge.innerText = level;
+        levelBadge.className = 'level-badge ' + levelClass;
+
+        const list = document.getElementById('suggestionsList');
+        list.innerHTML = "";
+        suggestions.slice(0, 3).forEach(s => {
+            const li = document.createElement('li');
+            li.innerText = s;
+            list.appendChild(li);
+        });
+
+        // 6. Motivation Remark
+        const motivations = {
+            "Low": "Small steps lead to big changes. Start today and watch your progress grow.",
+            "Average": "You're building a solid foundation. A few strategic tweaks will skyrocket your results!",
+            "Good": "Great consistency! You're very close to reaching peak performance levels.",
+            "Excellent": "Exceptional work ethic. Keep refining your craft to stay at the top of your game!"
+        };
+        document.getElementById('motivationText').innerText = `"${motivations[level]}"`;
+    }
+</script>
+
+</body>
+</html>
